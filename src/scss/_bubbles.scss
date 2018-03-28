@@ -1,0 +1,160 @@
+.bubble{
+	width: 100%;
+	padding-left: 40px;
+	clear: both;
+	animation: pop .3s forwards ease;
+	opacity: 0;
+	padding-top: 30px;
+	&:first-child{
+		margin-top: -30px;
+	}
+	&:after{
+		content: '';
+		display: block;
+		clear: both;
+	}
+}
+
+.bubble--bot{
+    animation-delay: .2s;
+    .bubble__inner{
+        background: $bot-bubble-bg;
+    	color: $bot-bubble-txt;
+        &:before{
+            background-image: url( $bot-avatar-img );
+        }
+        &:after{
+            border-color: transparent transparent $bot-bubble-bg transparent;
+        }
+    }
+}
+
+.bubble--user{
+
+	animation-delay: 1s;
+    padding-left: 0;
+	padding-right: 9px;
+
+    .bubble__inner{
+
+        background: $user-bubble-bg;
+    	color: $user-bubble-txt;
+		float: right;
+		margin-left: 30px;
+
+		// hide avatar
+		&:before{
+			display: none;
+		}
+
+		&:after{
+			border-width: 16px 0 0 16px;
+			border-color: transparent transparent transparent $user-bubble-bg;
+            transform: rotate(30deg);
+			left: auto;
+			right: -6px;
+		}
+
+	}
+
+}
+
+.bubble__inner{
+	padding: 20px;
+	border-radius: $bubble-border-radius;
+	font-size: 14px;
+	width: 100%;
+	clear: both;
+	position: relative;
+
+	&:before,
+	&:after{
+		content: '';
+		display: block;
+		position: absolute;
+	}
+
+	// avatar
+	&:before{
+		height: 40px;
+		width: 40px;
+		border-radius: 100%;
+		bottom: -10px;
+		left: -50px;
+		background: #fff;
+		background-repeat: no-repeat;
+		background-size: cover;
+		background-position: center;
+		z-index: 1;
+	}
+
+	// bubble tail
+	&:after{
+		z-index: 0;
+		width: 0;
+		height: 0;
+		border-style: solid;
+		border-width: 0 0 16px 16px;
+        transform: rotate(-30deg);
+		bottom: 0;
+		left: -6px;
+	}
+
+}
+
+/***************************************
+* 2. Small Screen Sizes (tablet portrait)
+****************************************/
+
+@media ( min-width: $breakpoint-sm ) {
+
+    .bubble{
+    	padding-top: 60px;
+    	&:first-child{
+    		margin-top: -60px;
+    	}
+    }
+
+    .bubble--bot{
+    	padding-left: 100px;
+    	.bubble__inner{
+    		&:before{
+    			left: -100px;
+    			bottom: -40px;
+    		}
+    	}
+    }
+
+    .bubble--user{
+    	padding-right: 10px;
+    }
+
+    .bubble__inner{
+    	width: 75%;
+    	font-size: 18px;
+    	&:before{
+    		height: 80px;
+    		width: 80px;
+    	}
+    }
+
+}
+
+/***************************************
+* 3. Medium Screen Sizes (standard desktop)
+****************************************/
+
+@media ( min-width: $breakpoint-md ) {
+
+    .bubble__inner{
+    	width: 65%;
+    	font-size: 22px;
+    }
+
+}
+
+/***************************************
+* 4. Large Screen Sizes (large desktop)
+****************************************/
+
+//@media ( min-width: $breakpoint-lg ) {}

@@ -3,14 +3,110 @@
 <head>
 <meta charset="utf-8">
 <title>Selby - Simple Example</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/meyer-reset/2.0/reset.min.css" rel="stylesheet">
+<link href="../dist/css/example.min.css" rel="stylesheet">
+<link href="../dist/css/selby.min.css" rel="stylesheet">
 </head>
 <body>
 
 <div id="selby"></div>
 
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/handlebars.js/4.0.11/handlebars.min.js"></script>
+<script src="../dist/js/jquery.selby.min.js"></script>
 <script>
-$( '#selby' ).selby();
+$( '#selby' ).selby({
+    fields: {
+        reason_for_contact: {
+            type: 'radio',
+            options: {
+                quote: 'I would like a services quote',
+                partnership: 'I\'m looking for a development partner',
+                recruitment: 'I\'m a recruiter looking for placement candidates'
+            }
+        },
+        company: {
+            type: 'text',
+            label: 'My company name is:',
+            placeholder: 'Enter company name'
+        },
+        type_of_work : {
+            type: 'select',
+            label: 'I need a quote on:',
+            options: {
+                tracking: 'Fixing/Implementation of Website Tracking',
+                website: 'Website Development'
+            }
+        },
+        start_date : {
+            type: 'text',
+            label: 'I am looking kickoff the project on:',
+            placeholder: 'MM/DD/YYYY'
+        },
+        end_date : {
+            type: 'text',
+            label: 'The project needs to be complete by:',
+            placeholder: 'MM/DD/YYYY'
+        }
+    },
+    questions: {
+
+        start: {
+            bot: 'Hey there, I\'m {{botName}}! I might look like Derek, but im just a machine living in a human\'s world. <strong>Now that you know my name, what\'s yours?</strong>',
+            prompt: 'Hey {{botName}}, nice to meet you!<br> <strong>My name is</strong>',
+            fields: [
+                'name'
+            ],
+            next: 'reason_for_contact'
+        },
+
+        reason_for_contact: {
+            bot: 'Hi, {{firstname}} it\'s nice to meet you! How can I help you today?',
+            prompt: 'Sure, I am contacting you because:',
+            fields: [
+                'reason_for_contact'
+            ],
+            next: [
+                {
+                    condition: function() { return ( 'quote' == storage.reason_for_contact ); },
+                    key: 'project_details'
+                },
+                {
+                    condition: function() { return ( 'recruitment' == storage.reason_for_contact ); },
+                    key: 'recruiter_message'
+                },
+                {
+                    condition: function() { return ( 'partnership' == storage.reason_for_contact ); },
+                    key: 'partnerships'
+                }
+            ]
+        },
+
+        partnerships: {
+            bot: 'Great! We love partnerships! Can you tell me a little about your company?',
+            prompt: 'Sure, here\'s a bit about us:',
+            fields: [
+                'company'
+            ]
+        },
+
+        project_details: {
+            bot: 'Awesome!<br> There are a couple things we\'ll need to provide a quote. Can you please provide some information about your project?',
+            prompt: 'Yep here\'s the details:',
+            fields: [
+                'type_of_work',
+                'start_date',
+                'end_date'
+            ]
+        },
+
+        recruiter_message: {
+            bot: 'Sorry, {{firstname}}. Derek isn\'t currently exploring new job opportunities. If you wish, you can <a href="https://www.linkedin.com/in/derekcavaliero/" target="_blank" rel="noopener">send him an invitation to connect on LinkedIn.</a>'
+        }
+
+    }
+});
 </script>
 
 </body>

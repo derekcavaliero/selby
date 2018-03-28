@@ -20,7 +20,6 @@ module.exports = function( grunt ) {
 		sass: {
 			options: {
 				loadPath: [
-					'<%= project.bootstrap.scss %>',
 					require( 'node-bourbon' ).includePaths,
 			 	]
 			},
@@ -29,20 +28,23 @@ module.exports = function( grunt ) {
 					style: 'expanded',  // nested, compact, compressed, expanded
 					sourcemap: 'none'     // auto, file, inline, none
 				},
-				files: {}
+				files: {
+                    '<%= project.dist.css %>/selby.min.css': [ '<%= project.src.scss %>/selby.scss' ],
+                    '<%= project.dist.css %>/example.min.css': [ '<%= project.src.scss %>/example.scss' ]
+                }
 			}
 		},
 
 		uglify: {
 			options: {
-				beautify: true,  // minify file when set to false
-				compress: false,     // renames variables and all that
-				mangle: false
+				beautify: false,  // minify file when set to false
+				compress: true, // renames variables and all that
+				mangle: true
 			},
 			dist: {
 				files: {
 					'<%= project.dist.js %>/jquery.selby.min.js': [
-						'<%= project.bootstrap.js %>/jquery.selby.js'
+						'<%= project.src.js %>/jquery.selby.js'
 					]
 				}
 			}

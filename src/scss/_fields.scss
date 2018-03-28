@@ -1,0 +1,102 @@
+.bubble__field{
+	margin-top: 5px;
+}
+
+.bubble__input{
+	border: 0;
+    font-size: 1rem;
+	&,
+	&:focus{
+		outline: none;
+	}
+	&::-webkit-input-placeholder{
+		color: darken( $user-bubble-bg, 35% );
+	}
+	&:-moz-placeholder{
+		color: darken( $user-bubble-bg, 35% );
+	}
+	&::-moz-placeholder{
+		color: darken( $user-bubble-bg, 35% );
+	}
+	&:-ms-input-placeholder{
+		color: darken( $user-bubble-bg, 35% );
+	}
+	&::-ms-input-placeholder{
+		color: darken( $user-bubble-bg, 35% );
+	}
+}
+
+.bubble__input--text,
+.bubble__input--select,
+.bubble__input--textarea{
+	width: 100%;
+    -webkit-appearance: none;
+}
+
+.bubble__input--text{
+	background: transparent;
+	color: darken( $user-bubble-bg, 50% );
+	padding: 6px 0;
+	border-bottom: 1px solid darken( $user-bubble-bg, 25% );
+}
+
+.bubble__radios{
+
+	position: relative;
+
+	label{
+
+		display: block;
+		width: 100%;
+		text-align: center;
+		font-weight: 700;
+		font-size: 15px;
+		background: darken( $user-bubble-bg, 25% );
+		border: 0;
+		margin: 0;
+		padding: 12px;
+		line-height: 1.25;
+		color: #fff;
+		cursor: pointer;
+
+		&:first-of-type{
+			border-radius: 4px 4px 0 0;
+		}
+		&:last-of-type{
+			border-radius: 0 0 4px 4px;
+		}
+
+		&:focus,
+		&:active,
+		&:hover{
+			background: darken( $user-bubble-bg, 35% );
+			color: #fff;
+		}
+	}
+
+	input{
+		position: absolute;
+		opacity: 0;
+		left: 0;
+	}
+
+	input:checked + label{
+		background: darken( $user-bubble-bg, 35% ) !important;
+		color: #fff !important;
+	}
+
+	input:disabled + label{
+		display: none;
+		&:focus,
+		&:active,
+		&:hover{
+			background: darken( $user-bubble-bg, 25% );
+			color: #fff;
+			cursor: not-allowed;
+		}
+	}
+	input:disabled:checked + label{
+		display: block !important;
+	}
+
+}
