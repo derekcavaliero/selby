@@ -76,7 +76,7 @@
 
             this.element.addClass( 'selby' );
             this.setupListeners();
-            this.processStep();
+            this.processStep( 'start' );
 
         },
 
@@ -92,12 +92,15 @@
                 var userInput = parent.serializeObject( $this );
 
                 parent._storage = $.extend( {}, parent._storage, parent.transformInput( userInput ) );
-                console.log( parent._storage );
+                //console.log( parent._storage );
 
                 $this.find( '.bubble__input' ).prop( 'disabled', true );
                 $this.find( '.bubble__button' ).hide();
 
-                parent.processStep( parent.determineNextStep( parent._questions[userInput.step] ) );
+                if ( parent._questions[userInput.step] ) {
+                    var nextStepKey = parent.determineNextStep( parent._questions[userInput.step] );
+                    parent.processStep( nextStepKey );
+                }
 
             });
 
@@ -119,34 +122,38 @@
 
         processStep: function ( stepKey ) {
 
-            if ( stepKey == null )
-                stepKey = 'start';
+            if ( stepKey ) {
 
-            var step = this._questions[stepKey];
+                var step = this._questions[stepKey];
 
-            // @TODO: check step objeect fields array vs. storage to see if we're asking for data we either already have (remove the field keys if so)
+                // @TODO: check step objeect fields array vs. storage to see if we're asking for data we either already have (remove the field keys if so)
 
-            if ( step.bot ) {
+                if ( step.hasOwnProperty( 'bot' ) ) {
 
-                this.element.append( tpl.bot({
-                    bot: step.bot, // @ TODO: possibly add ability to filter the bot message string?
-                    userInput : this._storage
-                }) );
+                    this.element.append( tpl.bot({
+                        bot: step.bot, // @ TODO: possibly add ability to filter the bot message string?
+                        userInput : this._storage
+                    }) );
 
-            }
+                }
 
-            if ( step.prompt ) {
+                if ( step.hasOwnProperty( 'prompt' ) ) {
 
-                var userData = {
-                    prompt: step.prompt,
-                    stepKey: stepKey,
-                    userInput : this._storage
-                };
+                    var userData = {
+                        prompt: step.prompt,
+                        stepKey: stepKey,
+                        userInput : this._storage
+                    };
 
-                if ( step.fields )
-                    userData.fields = this.renderFields( step.fields, stepKey );
+                    if ( step.fields )
+                        userData.fields = this.renderFields( step.fields, stepKey );
 
-                var userPrompt = $( tpl.user( userData ) ).appendTo( this.element );
+                    var userPrompt = $( tpl.user( userData ) ).appendTo( this.element );
+
+                }
+
+                if ( this.options.onStepReady.constructor === Function && step.prompt )
+                    this.options.onStepReady( userPrompt );
 
             }
 
@@ -156,18 +163,6 @@
                 $( 'html, body' ).animate({
                     scrollTop: $lastBotMsg.offset().top
                 }, 500 );
-            }
-
-
-            if ( this.options.onStepReady.constructor === Function )
-                this.options.onStepReady( userPrompt );
-
-            if ( step.sendData === true ) {
-
-                // @TODO: if sendData === Function
-                // Run the callback. Inside that callback we should check that we have all fields needed in order to process the data.
-
-                this.processData();
             }
 
         },
@@ -259,13 +254,37 @@
 
         determineNextStep: function( step ) {
 
-            var nextStepKey = step.next;
+            var nextStepKey = false;
 
-            if ( step.next.constructor === Function ) {
+            if ( step.next && step.next.constructor === Function ) {
                 nextStepKey = step.next( this._storage );
+            } else {
+                nextStepKey = step.next;
+            }
+
+            if ( step.sendData === true || this._questions[nextStepKey].sendData === true ) {
+                this.processData();
+                return false;
             }
 
             return nextStepKey;
+
+        },
+
+        checkRequiredFields: function() {
+
+            var parent = this;
+            var missingFields = [];
+
+            this.options.requiredFields.forEach( function( key ) {
+
+                if ( !parent._storage[key] ) {
+                    missingFields.push( key );
+                }
+
+            });
+
+            return missingFields;
 
         },
 
@@ -298,7 +317,36 @@
     			error: function( jqXHR, textStatus, errorThrown ) {
                     // @TODO: Add error tracking and or data callback here.
     			},
-    			beforeSend: function() {} // Not sure if we need this at all...
+    			beforeSend: function( xhr, opts ) {
+
+                    parent.element.append( tpl.bot({
+                        bot: '<strong>Hang tight!</strong> I\'m processing your information. This should only take a moment.',
+                        userInput : parent._storage
+                    }) );
+
+                    var requiredFields = parent.checkRequiredFields();
+
+                    //console.log( requiredFields );
+
+                    if ( requiredFields.length > 0 ) {
+
+                        xhr.abort();
+
+                        parent.element.append( tpl.bot({
+                            bot: '<strong>Sorry {{firstname}}</strong> It looks like I am missing some required information to process your request. Can you please provide the following information?',
+                            userInput : parent._storage
+                        }) );
+
+                        parent.element.append( tpl.user({
+                            prompt: 'Sure thing! Here\'s the remaining information:',
+                            userInput : parent._storage,
+                            stepKey: 'end',
+                            fields: parent.renderFields( requiredFields, 'end' )
+                        }) );
+
+                    }
+
+                }
     		});
 
         },
