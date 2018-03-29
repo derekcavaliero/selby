@@ -7,6 +7,11 @@
 <link href="https://cdnjs.cloudflare.com/ajax/libs/meyer-reset/2.0/reset.min.css" rel="stylesheet">
 <link href="../dist/css/example.min.css" rel="stylesheet">
 <link href="../dist/css/selby.min.css" rel="stylesheet">
+
+<!-- Start of HubSpot Embed Code -->
+<script type="text/javascript" id="hs-script-loader" async defer src="//js.hs-scripts.com/297156.js"></script>
+<!-- End of HubSpot Embed Code -->
+
 </head>
 <body>
 
@@ -17,7 +22,16 @@
 <script src="../dist/js/jquery.selby.min.js"></script>
 <script>
 $( '#selby' ).selby({
+    dataEndpoint: 'http://selby.local/examples/hubspot.php',
     fields: {
+        email: {
+            type: 'email',
+            placeholder: 'Enter your email address'
+        },
+        phone: {
+            type: 'tel',
+            placeholder: 'Enter your phone number'
+        },
         reason_for_contact: {
             type: 'radio',
             options: {
@@ -30,6 +44,13 @@ $( '#selby' ).selby({
             type: 'text',
             label: 'My company name is:',
             placeholder: 'Enter company name'
+        },
+        preferred_contact_method: {
+            type: 'radio',
+            options: {
+                Phone: 'Call me',
+                Email: 'Send me an email'
+            }
         },
         type_of_work : {
             type: 'select',
@@ -53,7 +74,7 @@ $( '#selby' ).selby({
     questions: {
 
         start: {
-            bot: 'Hey there, I\'m {{botName}}! I might look like Derek, but im just a machine living in a human\'s world. <strong>Now that you know my name, what\'s yours?</strong>',
+            bot: 'Hey there! I\'m {{botName}}! I might look like Derek, but im just a machine living in a human\'s world. <strong>Now that you know my name, what\'s yours?</strong>',
             prompt: 'Hey {{botName}}, nice to meet you!<br> <strong>My name is</strong>',
             fields: [
                 'name'
@@ -67,20 +88,24 @@ $( '#selby' ).selby({
             fields: [
                 'reason_for_contact'
             ],
-            next: [
-                {
-                    condition: function() { return ( 'quote' == storage.reason_for_contact ); },
-                    key: 'project_details'
-                },
-                {
-                    condition: function() { return ( 'recruitment' == storage.reason_for_contact ); },
-                    key: 'recruiter_message'
-                },
-                {
-                    condition: function() { return ( 'partnership' == storage.reason_for_contact ); },
-                    key: 'partnerships'
+            next: function( storage ) {
+
+                var nextKey;
+
+                switch( storage.reason_for_contact ) {
+                    case 'partnership':
+                        nextKey = 'partnerships';
+                    break;
+                    case 'recruitment':
+                        nextKey = 'recruiter_message';
+                    break;
+                    case 'quote':
+                        nextKey = 'project_details';
+                    break;
                 }
-            ]
+
+                return nextKey;
+            }
         },
 
         partnerships: {
@@ -98,11 +123,52 @@ $( '#selby' ).selby({
                 'type_of_work',
                 'start_date',
                 'end_date'
-            ]
+            ],
+            next: 'preferred_contact_method'
+        },
+
+        preferred_contact_method: {
+            bot: 'Thanks for that information! How would you like us to contact you about your {{reason_for_contact}}?',
+            prompt: 'I would like you to:',
+            fields: [
+                'preferred_contact_method'
+            ],
+            next: function( storage ) {
+                var k;
+                if ( 'Phone' == storage.preferred_contact_method ) {
+                    k = 'contact_phone';
+                } else if ( 'Email' == storage.preferred_contact_method ) {
+                    k = 'contact_email';
+                }
+                return k;
+            }
+        },
+
+        contact_phone: {
+            bot: 'Fantastic! We\'d be happy to give you a call. What is the best number to reach you on?</a>',
+            prompt: 'You can reach me at:',
+            fields: [
+                'phone'
+            ],
+            next: 'end'
+        },
+
+        contact_email: {
+            bot: 'Alrighty then, we\'ll follow up via email. What email address should we send the information to?</a>',
+            prompt: 'I check this email pretty frequently:',
+            fields: [
+                'email'
+            ],
+            next: 'end'
         },
 
         recruiter_message: {
             bot: 'Sorry, {{firstname}}. Derek isn\'t currently exploring new job opportunities. If you wish, you can <a href="https://www.linkedin.com/in/derekcavaliero/" target="_blank" rel="noopener">send him an invitation to connect on LinkedIn.</a>'
+        },
+
+        end: {
+            bot: 'Thanks {{firstname}}! We\'re going to process this information and get back to you shortly.</a>',
+            sendData: true
         }
 
     }

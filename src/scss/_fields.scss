@@ -1,5 +1,13 @@
 .bubble__field{
-	margin-top: 5px;
+	margin-top: 7px;
+}
+
+.bubble__input-label{
+    font-size: 0.85em;
+    margin-bottom: 5px;
+    + .bubble__input{
+        margin-top: 0;
+    }
 }
 
 .bubble__input{
@@ -27,16 +35,32 @@
 }
 
 .bubble__input--text,
+.bubble__input--tel,
+.bubble__input--email,
 .bubble__input--select,
 .bubble__input--textarea{
 	width: 100%;
     -webkit-appearance: none;
+    background: #fff;
+    border: 0;
+    padding: 11px 12px;
+    font-size: 16px;
 }
 
-.bubble__input--text{
+.bubble__input--select{
+    padding-right: 30px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1030 638'%3E%3Cpath fill='#{$user-bubble-bg}' d='M1017 68L541 626q-11 12-26 12t-26-12L13 68Q-3 49 6 24.5T39 0h952q24 0 33 24.5t-7 43.5z' /%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-size: 10px 10px;
+    background-position: right 12px center;
+}
+
+.bubble__input--text,
+.bubble__input--tel,
+.bubble__input--email{
+    height: 41px;
 	background: transparent;
 	color: darken( $user-bubble-bg, 50% );
-	padding: 6px 0;
 	border-bottom: 1px solid darken( $user-bubble-bg, 25% );
 }
 
