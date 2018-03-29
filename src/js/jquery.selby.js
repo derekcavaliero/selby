@@ -18,14 +18,20 @@
                         'name'
                     ]
                 }
-            }
+            },
+
+            // Global callbacks:
+            dataFilter: null,          // function( data ) { return data; }
+            onStepReady: null,         // function( $prompt ) {}
+            onComplete: null           // @TODO: integrate these
         },
         tpl = {
             bot: Handlebars.compile( '<div class="bubble bubble--bot"><div class="bubble__inner">{{{smartString bot userInput}}}</div></div>' ),
             user: Handlebars.compile( '<form class="bubble bubble--user"><div class="bubble__inner">{{{ smartString prompt userInput }}}{{{fields}}}<input type="hidden" name="step" value="{{stepKey}}"></div></form>' )
         };
 
-    function Plugin( element, options ) {
+
+    function Selby( element, options ) {
 
         this.element = $( element );
 
@@ -47,269 +53,317 @@
 
     }
 
-    Plugin.prototype.init = function () {
 
-        // Place initialization logic here
-        // You already have access to the DOM element and
-        // the options via the instance, e.g. this.element
-        // and this.options
+    Selby.prototype = {
 
-        var parent = this;
+        init: function () {
 
-        Handlebars.registerHelper( 'smartString', function( text, userInput ) {
-            for ( var field in userInput ) {
-                if ( !userInput.hasOwnProperty( field ) ) continue;
-                text = text.replace( '{{' + field + '}}', '<mark>' + userInput[field] + '</mark>' );
-            }
-            text = text.replace( '{{botName}}', parent.options.botName );
-            return new Handlebars.SafeString( text );
-        });
+            // Place initialization logic here
+            // You already have access to the DOM element and
+            // the options via the instance, e.g. this.element
+            // and this.options
 
-        this.element.addClass( 'selby' );
-        this.setupListeners();
-        this.processStep();
+            var parent = this;
 
-    };
-
-    Plugin.prototype.serializeObject = function( form ) {
-        var o = {};
-        var a = form.serializeArray();
-        $.each(a, function() {
-            if (o[this.name]) {
-                if (!o[this.name].push) {
-                    o[this.name] = [o[this.name]];
+            Handlebars.registerHelper( 'smartString', function( text, userInput ) {
+                for ( var field in userInput ) {
+                    if ( !userInput.hasOwnProperty( field ) ) continue;
+                    text = text.replace( '{{' + field + '}}', '<mark>' + userInput[field] + '</mark>' );
                 }
-                o[this.name].push(this.value || '');
-            } else {
-                o[this.name] = this.value || '';
-            }
-        });
-        return o;
-    };
+                text = text.replace( '{{botName}}', parent.options.botName );
+                return new Handlebars.SafeString( text );
+            });
 
-    Plugin.prototype.setupListeners = function() {
+            this.element.addClass( 'selby' );
+            this.setupListeners();
+            this.processStep();
 
-        var parent = this;
+        },
 
-        this.element.on( 'submit', '.bubble--user', function( e ) {
+        setupListeners: function() {
 
-            e.preventDefault();
+            var parent = this;
 
-            var $this = $(this);
-            var userInput = parent.serializeObject( $this );
+            this.element.on( 'submit', '.bubble--user', function( e ) {
 
-            parent._storage = $.extend( {}, parent._storage, parent.transformInput( userInput ) );
-            console.log( parent._storage );
+                e.preventDefault();
 
-            $this.find( '.bubble__input' ).prop( 'disabled', true );
+                var $this = $(this);
+                var userInput = parent.serializeObject( $this );
 
-            parent.processStep( parent.determineNextStep( parent._questions[userInput.step] ) );
+                parent._storage = $.extend( {}, parent._storage, parent.transformInput( userInput ) );
+                console.log( parent._storage );
 
-        });
+                $this.find( '.bubble__input' ).prop( 'disabled', true );
+                $this.find( '.bubble__button' ).hide();
 
-        this.element.on( 'change', '.bubble__input--select, .bubble__input--radio', function( e ) {
+                parent.processStep( parent.determineNextStep( parent._questions[userInput.step] ) );
 
-            var $this = $(this);
-            if ( $this.data( 'proceed-on-change' ) ) {
-                var $form = $this.parents( 'form' );
-                if ( !$this.prop( 'disabled' ) ) {
-                    $form.submit();
-                } else {
-                    e.preventDefault();
+            });
+
+            this.element.on( 'change', '.bubble__input--select, .bubble__input--radio', function( e ) {
+
+                var $this = $(this);
+                if ( $this.data( 'proceed-on-change' ) ) {
+                    var $form = $this.parents( 'form' );
+                    if ( !$this.prop( 'disabled' ) ) {
+                        $form.submit();
+                    } else {
+                        e.preventDefault();
+                    }
                 }
-            }
 
-        });
+            });
 
-    };
+        },
 
+        processStep: function ( stepKey ) {
 
-    Plugin.prototype.ucFirst = function( str ) {
-        return str.replace( /^./, str.substring( 0, 1 ).toUpperCase() );
-    };
+            if ( stepKey == null )
+                stepKey = 'start';
 
-    Plugin.prototype.determineNextStep = function( step ) {
+            var step = this._questions[stepKey];
 
-        var nextStepKey = step.next;
+            // @TODO: check step objeect fields array vs. storage to see if we're asking for data we either already have (remove the field keys if so)
 
-        if ( step.next.constructor === Function ) {
-            nextStepKey = step.next( this._storage );
-        }
+            if ( step.bot ) {
 
-        return nextStepKey;
-
-    };
-
-    Plugin.prototype.transformInput = function( inputObj ) {
-
-        for ( var field in inputObj ) {
-
-            if ( !inputObj.hasOwnProperty( field ) ) continue;
-
-            var value = inputObj[field].trim();
-
-            if ( 'name' == field ) {
-
-                var nameParts = value.split( ' ' );
-                inputObj.firstname = this.ucFirst( nameParts[0] );
-
-                if ( nameParts[1] )
-                    inputObj.lastname = this.ucFirst( nameParts[1] );
-
-                delete inputObj[field];
+                this.element.append( tpl.bot({
+                    bot: step.bot, // @ TODO: possibly add ability to filter the bot message string?
+                    userInput : this._storage
+                }) );
 
             }
 
-        }
+            if ( step.prompt ) {
 
-        return inputObj;
+                var userData = {
+                    prompt: step.prompt,
+                    stepKey: stepKey,
+                    userInput : this._storage
+                };
 
-    };
+                if ( step.fields )
+                    userData.fields = this.renderFields( step.fields, stepKey );
 
-    Plugin.prototype.renderFields = function( fieldKeys, stepKey ) {
+                var userPrompt = $( tpl.user( userData ) ).appendTo( this.element );
 
-        var parent = this;
-        var html = '';
-        var fieldCount = fieldKeys.length;
-        var dataAttr = ' data-proceed-on-change="' + ( ( fieldCount === 1 ) ? 'true' : 'false' ) + '"';
+            }
 
-        fieldKeys.forEach( function( key ) {
+            var $lastBotMsg = this.element.find( '.bubble--bot:last' );
 
-            html += '<div class="bubble__field">';
+            if ( stepKey !== 'start' ) {
+                $( 'html, body' ).animate({
+                    scrollTop: $lastBotMsg.offset().top
+                }, 500 );
+            }
 
-            var field = parent._fields[key];
-            var fieldClass = 'bubble__input bubble__input--' + field.type;
-            var commonAttr = ' name="' + key + '" class="' + fieldClass + '" required ';
 
-            if ( field.label )
-                html += '<label class="bubble__input-label" for="' + key + 'Field">' + field.label + '</label>';
+            if ( this.options.onStepReady.constructor === Function )
+                this.options.onStepReady( userPrompt );
 
-            switch ( field.type ) {
-                case 'text':
-                case 'email':
-                case 'number':
-                case 'tel':
-                    html += '<input' + commonAttr + ' type="' + field.type + '" placeholder="' + field.placeholder + '" id="' + key + 'Field">';
-                break;
-                case 'select':
-                    html += '<select' + commonAttr + dataAttr + ' id="' + key + 'Field">';
-                    for ( var item in field.options ) {
-                        if ( !field.options.hasOwnProperty( item ) ) continue;
-                        html += '<option value="' + item + '">' + field.options[item] + '</option>';
+            if ( step.sendData === true ) {
+
+                // @TODO: if sendData === Function
+                // Run the callback. Inside that callback we should check that we have all fields needed in order to process the data.
+
+                this.processData();
+            }
+
+        },
+
+        renderFields: function( fieldKeys, stepKey ) {
+
+            var parent = this,
+                output = '',
+                fieldCount = fieldKeys.length,
+                outputButton = false,
+                needsButtonTypes = ['text', 'tel', 'email', 'number', 'textarea', 'checkbox'],
+                fieldDataAttr = ' data-proceed-on-change="' + ( ( fieldCount === 1 ) ? 'true' : 'false' ) + '"';
+
+            fieldKeys.forEach( function( key ) {
+
+                output += '<div class="bubble__field">';
+
+                var field = parent._fields[key],
+                    fieldClasses = 'bubble__input bubble__input--' + field.type,
+                    fieldAttr = ' name="' + key + '" class="' + fieldClasses + '" required ';
+
+                if ( field.label )
+                    output += '<label class="bubble__input-label" for="' + key + 'Field">' + field.label + '</label>';
+
+                switch ( field.type ) {
+
+                    case 'text':
+                    case 'email':
+                    case 'number':
+                    case 'tel':
+
+                        output += '<input' + fieldAttr + ' type="' + field.type + '" placeholder="' + field.placeholder + '" id="' + key + 'Field">';
+
+                    break;
+
+                    case 'select':
+
+                        output += '<select' + fieldAttr + fieldDataAttr + ' id="' + key + 'Field">';
+
+                            for ( var item in field.options ) {
+                                if ( !field.options.hasOwnProperty( item ) ) continue;
+                                output += '<option value="' + item + '">' + field.options[item] + '</option>';
+                            }
+
+                        output += '</select>';
+
+                    break;
+
+                    case 'radio':
+
+                        output += '<div class="bubble__radios">';
+
+                            for ( var item in field.options ) {
+                                if ( !field.options.hasOwnProperty( item ) ) continue;
+                                output += '<input type="radio"' + fieldAttr + fieldDataAttr + 'autocomplete="off" value="' + item + '" id="' + key + '--' + item + '"><label for="' + key + '--' + item + '">' + field.options[item] + '</label>';
+                            }
+
+                        output += '</div>';
+
+                    break;
+
+                    case 'textarea':
+
+                        output += '<textarea' + fieldAttr + ' placeholder="' + field.placeholder + '" id="' + key + 'Field"></textarea>';
+
+                    break;
+
+                    default:
+
+                        output += 'Selby does not currently support ' + field.type + ' as a valid field type.';
+
+                    break;
+
+                }
+
+                output += '</div>';
+
+                if ( ( fieldCount > 1 ) || ( needsButtonTypes.indexOf( field.type ) !== -1 ) ) // @TODO: Render button if single field is a text input type.
+                    outputButton = true;
+
+            });
+
+            if ( outputButton )
+                output += '<button type="submit" class="bubble__button">Continue</button>';
+
+            return output;
+
+        },
+
+        determineNextStep: function( step ) {
+
+            var nextStepKey = step.next;
+
+            if ( step.next.constructor === Function ) {
+                nextStepKey = step.next( this._storage );
+            }
+
+            return nextStepKey;
+
+        },
+
+        processData: function () {
+
+            // @TODO: allow user to filter datapayload prior to sending to endpoint.
+            var parent = this;
+            var url = this.options.dataEndpoint;
+            var payload = this._storage;
+
+            delete payload.step;
+
+            if ( this.options.dataFilter.constructor === Function )
+                payload = this.options.dataFilter( payload );
+
+            $.ajax({
+    			url: url,
+                method: 'POST',
+                type: 'json',
+    			data: payload,
+    			success: function( data ) {
+
+                    parent.element.append( tpl.bot({
+                        bot: '<strong>Thanks {{firstname}}, you\'re all set!</strong> Please give us some time to process your request. You can generally expect a response within a day or two.',
+                        userInput : parent._storage
+                    }) );
+
+                    // @TODO: Add tracking and or data callback here.
+    			},
+    			error: function( jqXHR, textStatus, errorThrown ) {
+                    // @TODO: Add error tracking and or data callback here.
+    			},
+    			beforeSend: function() {} // Not sure if we need this at all...
+    		});
+
+        },
+
+        // Helper Methods:
+
+            ucFirst: function( str ) {
+                return str.replace( /^./, str.substring( 0, 1 ).toUpperCase() );
+            },
+
+            serializeObject: function( form ) {
+                var o = {};
+                var a = form.serializeArray();
+                $.each(a, function() {
+                    if (o[this.name]) {
+                        if (!o[this.name].push) {
+                            o[this.name] = [o[this.name]];
+                        }
+                        o[this.name].push(this.value || '');
+                    } else {
+                        o[this.name] = this.value || '';
                     }
-                    html += '</select>';
-                break;
-                case 'radio':
-                    html += '<div class="bubble__radios">';
-                    for ( var item in field.options ) {
-                        if ( !field.options.hasOwnProperty( item ) ) continue;
-                        html += '<input type="radio"' + commonAttr + dataAttr + 'autocomplete="off" value="' + item + '" id="' + key + '--' + item + '"><label for="' + key + '--' + item + '">' + field.options[item] + '</label>';
+                });
+                return o;
+            },
+
+            transformInput: function( inputObj ) {
+
+                for ( var field in inputObj ) {
+
+                    if ( !inputObj.hasOwnProperty( field ) ) continue;
+
+                    var value = inputObj[field].trim();
+
+                    if ( 'name' == field ) {
+
+                        var nameParts = value.split( ' ' );
+                        inputObj.firstname = this.ucFirst( nameParts[0] );
+
+                        if ( nameParts[1] )
+                            inputObj.lastname = this.ucFirst( nameParts[1] );
+
+                        delete inputObj[field];
+
                     }
-                    html += '</div>';
-                break;
-            }
 
-            html += '</div>';
+                }
 
-        });
+                return inputObj;
 
-        if ( fieldCount > 1 ) // @TODO: Render button if single field is a text input type.
-            html += '<button type="submit" class="bubble__button">Continue</button>';
+            },
 
-        return html;
-
-    };
-
-    // Plugin.prototype.humanizeResponseTime = function( text ) {
-    //     var words = text.split( ' ' );
-    //     var wpm = 55;
-    //     var responseTime = ( ( words.length / wpm ) * 60 ) * 10;
-    //     return responseTime;
-    // };
-
-    Plugin.prototype.processData = function () {
-
-        // @TODO: allow user to filter datapayload prior to sending to endpoint.
-
-        var url = this.options.dataEndpoint;
-        var payload = this._storage;
-
-        delete payload.step;
-
-        payload.pageUrl = window.location.href;
-        payload.pageName = document.title;
-
-        $.ajax({
-			url: url,
-            method: 'POST',
-            type: 'json',
-			data: payload,
-			success: function( data ) {
-                console.log( 'ajax success' );
-				console.log( data );
-			},
-			error: function( jqXHR, textStatus, errorThrown ) {
-                console.log( 'ajax error' );
-			},
-			beforeSend: function() {
-                console.log( 'ajax before send' );
-			}
-		});
-
-    };
-
-    Plugin.prototype.processStep = function ( stepKey ) {
-
-        if ( stepKey == null )
-            stepKey = 'start';
-
-        var step = this._questions[stepKey];
-
-        // @TODO: check step objeect fields array vs. storage to see if we're asking for data we either already have (remove the field keys if so)
-
-        this.element.append( tpl.bot({
-            bot: step.bot, // @ TODO: possibly add ability to filter the bot message string?
-            userInput : this._storage
-        }) );
-
-        if ( step.prompt ) {
-
-            var promptData = {
-                prompt: step.prompt,
-                stepKey: stepKey,
-                userInput : this._storage
-            };
-
-            if ( step.fields )
-                promptData.fields = this.renderFields( step.fields, stepKey );
-
-            this.element.append( tpl.user( promptData ) );
-
-        }
-
-        var $lastBotMsg = this.element.find( '.bubble--bot:last' );
-
-        if ( stepKey !== 'start' ) {
-            $( 'html, body' ).animate({
-                scrollTop: $lastBotMsg.offset().top
-            }, 500 );
-        }
-
-        if ( step.sendData === true ) {
-
-            // @TODO: if sendData === Function
-            // Run the callback. Inside that callback we should check that we have all fields needed in order to process the data.
-
-            this.processData();
-        }
+            // humanizeResponseTime: function( text ) {
+            //     var words = text.split( ' ' );
+            //     var wpm = 55;
+            //     var responseTime = ( ( words.length / wpm ) * 60 ) * 10;
+            //     return responseTime;
+            // }
 
     };
 
     $.fn[pluginName] = function ( options ) {
         return this.each(function () {
-            if (!$.data(this, 'plugin_' + pluginName)) {
-                $.data(this, 'plugin_' + pluginName,
-                new Plugin( this, options ));
+            if ( !$.data( this, 'plugin_' + pluginName ) ) {
+                $.data( this, 'plugin_' + pluginName, new Selby( this, options ) );
             }
         });
     }
