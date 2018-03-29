@@ -2,9 +2,16 @@
 	margin-top: 7px;
 }
 
+.bubble__input-label,
+.bubble__input,
+.bubble__button{
+    font-size: 0.85rem;
+}
+
 .bubble__input-label{
-    font-size: 0.85em;
     margin-bottom: 5px;
+    font-weight: bold;
+    display: inline-block;
     + .bubble__input{
         margin-top: 0;
     }
@@ -12,26 +19,33 @@
 
 .bubble__input{
 	border: 0;
-    font-size: 1rem;
 	&,
 	&:focus{
 		outline: none;
 	}
 	&::-webkit-input-placeholder{
-		color: darken( $user-bubble-bg, 35% );
+		color: #fff;
+        opacity: 0.5;
 	}
 	&:-moz-placeholder{
-		color: darken( $user-bubble-bg, 35% );
+		color: #fff;
+        opacity: 0.5;
 	}
 	&::-moz-placeholder{
-		color: darken( $user-bubble-bg, 35% );
+		color: #fff;
+        opacity: 0.5;
 	}
 	&:-ms-input-placeholder{
-		color: darken( $user-bubble-bg, 35% );
+		color: #fff;
+        opacity: 0.5;
 	}
 	&::-ms-input-placeholder{
-		color: darken( $user-bubble-bg, 35% );
+		color: #fff;
+        opacity: 0.5;
 	}
+    &:disabled{
+        cursor: not-allowed;
+    }
 }
 
 .bubble__input--text,
@@ -41,10 +55,11 @@
 .bubble__input--textarea{
 	width: 100%;
     -webkit-appearance: none;
-    background: #fff;
+    background: darken( $user-bubble-bg, 25% );
+    border-radius: 4px;
+    color: #fff;
     border: 0;
     padding: 11px 12px;
-    font-size: 16px;
 }
 
 .bubble__input--select{
@@ -55,14 +70,14 @@
     background-position: right 12px center;
 }
 
-.bubble__input--text,
-.bubble__input--tel,
-.bubble__input--email{
-    height: 41px;
-	background: transparent;
-	color: darken( $user-bubble-bg, 50% );
-	border-bottom: 1px solid darken( $user-bubble-bg, 25% );
-}
+// .bubble__input--text,
+// .bubble__input--tel,
+// .bubble__input--email{
+//     height: 41px;
+// 	background: transparent;
+// 	color: darken( $user-bubble-bg, 50% );
+// 	border-bottom: 1px solid darken( $user-bubble-bg, 25% );
+// }
 
 .bubble__radios{
 
@@ -74,7 +89,7 @@
 		width: 100%;
 		text-align: center;
 		font-weight: 700;
-		font-size: 15px;
+		font-size: 14px;
 		background: darken( $user-bubble-bg, 25% );
 		border: 0;
 		margin: 0;
@@ -107,6 +122,7 @@
 	input:checked + label{
 		background: darken( $user-bubble-bg, 35% ) !important;
 		color: #fff !important;
+        border-radius: 4px;
 	}
 
 	input:disabled + label{
@@ -122,5 +138,35 @@
 	input:disabled:checked + label{
 		display: block !important;
 	}
+
+}
+
+.bubble__button{
+    border: 0;
+    border-radius: 4px;
+    background: #fff;
+    margin-top: 7px;
+    color: darken( $user-bubble-bg, 25% );
+    font-weight: bold;
+    line-height: 40px;
+    padding: 0 20px;
+    display: block;
+    width: 100%;
+    text-align: center;
+    cursor: pointer;
+    &:hover,
+    &:focus{
+        outline: none;
+        background: #e5e5e5;
+    }
+}
+
+
+@media ( min-width: $breakpoint-sm ) {
+
+    .bubble__button{
+        display: inline-block;
+        width: auto;
+    }
 
 }

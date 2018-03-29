@@ -7,7 +7,7 @@
 <link href="https://cdnjs.cloudflare.com/ajax/libs/meyer-reset/2.0/reset.min.css" rel="stylesheet">
 <link href="../dist/css/example.min.css" rel="stylesheet">
 <link href="../dist/css/selby.min.css" rel="stylesheet">
-
+<link href="https://cdnjs.cloudflare.com/ajax/libs/datepicker/0.6.4/datepicker.min.css" rel="stylesheet">
 <!-- Start of HubSpot Embed Code -->
 <script type="text/javascript" id="hs-script-loader" async defer src="//js.hs-scripts.com/297156.js"></script>
 <!-- End of HubSpot Embed Code -->
@@ -19,10 +19,21 @@
 
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/handlebars.js/4.0.11/handlebars.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/datepicker/0.6.4/datepicker.min.js"></script>
 <script src="../dist/js/jquery.selby.min.js"></script>
 <script>
 $( '#selby' ).selby({
     dataEndpoint: 'http://selby.local/examples/hubspot.php',
+    dataFilter: function( data ) {
+        data.pageUrl = window.location.href;
+        data.pageName = document.title;
+        return data;
+    },
+    onStepReady: function( $prompt ) {
+        $prompt.find( '[name="start_date"], [name="end_date"]' ).datepicker({
+            startDate: new Date()
+        });
+    },
     fields: {
         email: {
             type: 'email',
@@ -75,7 +86,7 @@ $( '#selby' ).selby({
 
         start: {
             bot: 'Hey there! I\'m {{botName}}! I might look like Derek, but im just a machine living in a human\'s world. <strong>Now that you know my name, what\'s yours?</strong>',
-            prompt: 'Hey {{botName}}, nice to meet you!<br> <strong>My name is</strong>',
+            prompt: 'Hey {{botName}}, nice to meet you! <strong>My name is:</strong>',
             fields: [
                 'name'
             ],

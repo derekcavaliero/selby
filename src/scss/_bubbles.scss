@@ -2,9 +2,13 @@
 	width: 100%;
 	padding-left: 40px;
 	clear: both;
-	animation: pop .3s forwards ease;
 	opacity: 0;
 	padding-top: 30px;
+
+    -webkit-animation-fill-mode: both;
+    animation-fill-mode: both;
+	animation: pop .3s forwards ease;
+
 	&:first-child{
 		margin-top: -30px;
 	}
@@ -62,7 +66,7 @@
 .bubble__inner{
 	padding: 20px;
 	border-radius: $bubble-border-radius;
-	font-size: 14px;
+	font-size: 15px;
 	width: 100%;
 	clear: both;
 	position: relative;

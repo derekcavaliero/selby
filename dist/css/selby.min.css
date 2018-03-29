@@ -14,9 +14,11 @@
   width: 100%;
   padding-left: 40px;
   clear: both;
-  animation: pop .3s forwards ease;
   opacity: 0;
   padding-top: 30px;
+  -webkit-animation-fill-mode: both;
+  animation-fill-mode: both;
+  animation: pop .3s forwards ease;
 }
 .bubble:first-child {
   margin-top: -30px;
@@ -66,7 +68,7 @@
 .bubble__inner {
   padding: 20px;
   border-radius: 20px;
-  font-size: 14px;
+  font-size: 15px;
   width: 100%;
   clear: both;
   position: relative;
@@ -147,9 +149,16 @@
   margin-top: 7px;
 }
 
+.bubble__input-label,
+.bubble__input,
+.bubble__button {
+  font-size: 0.85rem;
+}
+
 .bubble__input-label {
-  font-size: 0.85em;
   margin-bottom: 5px;
+  font-weight: bold;
+  display: inline-block;
 }
 .bubble__input-label + .bubble__input {
   margin-top: 0;
@@ -157,25 +166,32 @@
 
 .bubble__input {
   border: 0;
-  font-size: 1rem;
 }
 .bubble__input, .bubble__input:focus {
   outline: none;
 }
 .bubble__input::-webkit-input-placeholder {
-  color: #053765;
+  color: #fff;
+  opacity: 0.5;
 }
 .bubble__input:-moz-placeholder {
-  color: #053765;
+  color: #fff;
+  opacity: 0.5;
 }
 .bubble__input::-moz-placeholder {
-  color: #053765;
+  color: #fff;
+  opacity: 0.5;
 }
 .bubble__input:-ms-input-placeholder {
-  color: #053765;
+  color: #fff;
+  opacity: 0.5;
 }
 .bubble__input::-ms-input-placeholder {
-  color: #053765;
+  color: #fff;
+  opacity: 0.5;
+}
+.bubble__input:disabled {
+  cursor: not-allowed;
 }
 
 .bubble__input--text,
@@ -185,10 +201,11 @@
 .bubble__input--textarea {
   width: 100%;
   -webkit-appearance: none;
-  background: #fff;
+  background: #075196;
+  border-radius: 4px;
+  color: #fff;
   border: 0;
   padding: 11px 12px;
-  font-size: 16px;
 }
 
 .bubble__input--select {
@@ -199,15 +216,6 @@
   background-position: right 12px center;
 }
 
-.bubble__input--text,
-.bubble__input--tel,
-.bubble__input--email {
-  height: 41px;
-  background: transparent;
-  color: #010f1c;
-  border-bottom: 1px solid #075196;
-}
-
 .bubble__radios {
   position: relative;
 }
@@ -216,7 +224,7 @@
   width: 100%;
   text-align: center;
   font-weight: 700;
-  font-size: 15px;
+  font-size: 14px;
   background: #075196;
   border: 0;
   margin: 0;
@@ -243,6 +251,7 @@
 .bubble__radios input:checked + label {
   background: #053765 !important;
   color: #fff !important;
+  border-radius: 4px;
 }
 .bubble__radios input:disabled + label {
   display: none;
@@ -254,4 +263,30 @@
 }
 .bubble__radios input:disabled:checked + label {
   display: block !important;
+}
+
+.bubble__button {
+  border: 0;
+  border-radius: 4px;
+  background: #fff;
+  margin-top: 7px;
+  color: #075196;
+  font-weight: bold;
+  line-height: 40px;
+  padding: 0 20px;
+  display: block;
+  width: 100%;
+  text-align: center;
+  cursor: pointer;
+}
+.bubble__button:hover, .bubble__button:focus {
+  outline: none;
+  background: #e5e5e5;
+}
+
+@media (min-width: 768px) {
+  .bubble__button {
+    display: inline-block;
+    width: auto;
+  }
 }
