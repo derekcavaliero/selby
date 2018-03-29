@@ -7,20 +7,11 @@ $hs_context = [
     'pageName' => $_POST['pageName']
 ];
 
-$hs_context_json = json_encode( $hs_context );
+$_POST['hs_context'] = json_encode( $hs_context );
 
 unset( $_POST['pageUrl'] );
 unset( $_POST['pageName'] );
 
-//Need to populate these variable with values from the form.
-$str_post = "firstname=" . urlencode($firstname)
-    . "&lastname=" . urlencode($lastname)
-    . "&email=" . urlencode($email)
-    . "&phone=" . urlencode($phonenumber)
-    . "&company=" . urlencode($company)
-    . "&hs_context=" . urlencode($hs_context_json); //Leave this one be
-
-//replace the values in this URL with your portal ID and your form GUID
 $endpoint = 'https://forms.hubspot.com/uploads/form/v2/297156/650ace7d-64d7-42f5-ad4f-d03505dd4f0a';
 
 $ch = @curl_init();
