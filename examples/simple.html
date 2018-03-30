@@ -17,23 +17,55 @@
 
 <div id="selby"></div>
 
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/handlebars.js/4.0.11/handlebars.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/datepicker/0.6.4/datepicker.min.js"></script>
-<script src="../dist/js/jquery.selby.min.js"></script>
+
+<script src="../dist/js/jquery.selby.js"></script>
 <script>
+
+$.fn.selby.defaults = {
+    endpoints: {
+        hubspot: {
+            url: 'http://selby.local/examples/hubspot.php',
+            dataFilter: function( data ) {
+
+                data.pageUrl = window.location.href;
+                data.pageName = document.title;
+
+                return data;
+
+            }
+        }
+    }
+};
+
 $( '#selby' ).selby({
-    dataEndpoint: 'http://selby.local/examples/hubspot.php',
-    dataFilter: function( data ) {
-        data.pageUrl = window.location.href;
-        data.pageName = document.title;
-        return data;
+    messages: {
+        missingFields: function( storage, missingFieldKeys, defaultMsg ) {
+
+            var missingFieldCount = missingFieldKeys.length;
+            var msg;
+
+            if ( storage.hasOwnProperty( 'reason_for_contact' ) ) {
+                if ( ( missingFieldKeys.indexOf['email'] !== -1 ) && storage.preferred_contact_method == 'Phone' ) {
+                    if ( missingFieldCount === 1 )
+                        msg = '{{firstname}}, I forgot to ask you for your email address. Our system requires it for storing your contact record. We\'ll still contact you via your preferred method first.';
+                }
+            }
+
+            return msg;
+
+        }
     },
     onStepReady: function( $prompt ) {
         $prompt.find( '[name="start_date"], [name="end_date"]' ).datepicker({
             startDate: new Date()
         });
     },
+    requiredFields: [
+        'email'
+    ],
     fields: {
         email: {
             type: 'email',
@@ -178,8 +210,7 @@ $( '#selby' ).selby({
         },
 
         end: {
-            bot: 'Thanks {{firstname}}! We\'re going to process this information and get back to you shortly.</a>',
-            sendData: true
+            sendData: 'hubspot'
         }
 
     }

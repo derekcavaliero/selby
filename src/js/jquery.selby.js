@@ -1,35 +1,43 @@
 ;(function ( $, window, document, undefined ) {
 
-    var pluginName = 'selby',
-        defaults = {
+    console.time( 'selby' );
+
+    var pluginName = 'selby';
+    var defaults = {
+
             botName: 'Selby',
-            dataEndpoint: false,
+            conversationName: 'Selby',
+
+            messages: {
+                missingFields: '<strong>Sorry {{firstname}}</strong> It looks like I am missing some required information to process your request. Can you please provide the following information?'
+            },
+
             fields: {
                 name: {
                     type: 'text',
                     placeholder: 'First and last name'
                 }
             },
+
             questions: {
                 start: {
-                    bot: 'Hey there, I\'m {{botName}}! I might look like Derek, but im just a machine living in a human\'s world. <strong>Now that you know my name, what\'s yours?</strong>',
-                    prompt: 'Hey {{botName}}, nice to meet you!<br> <strong>My name is</strong>',
-                    fields: [
-                        'name'
-                    ]
+                    bot: '<strong>Uh oh!</strong> it appears that my creator forgot to configure me. I\'m rather dumb without proper configuration settings unfortunately.'
                 }
             },
 
             // Global callbacks:
-            dataFilter: null,          // function( data ) { return data; }
             onStepReady: null,         // function( $prompt ) {}
             onComplete: null           // @TODO: integrate these
+
         },
         tpl = {
-            bot: Handlebars.compile( '<div class="bubble bubble--bot"><div class="bubble__inner">{{{smartString bot userInput}}}</div></div>' ),
-            user: Handlebars.compile( '<form class="bubble bubble--user"><div class="bubble__inner">{{{ smartString prompt userInput }}}{{{fields}}}<input type="hidden" name="step" value="{{stepKey}}"></div></form>' )
+            bot: Handlebars.compile(
+                '<div class="bubble bubble--bot"><div class="bubble__inner">{{{smartString bot userInput}}}</div></div>'
+            ),
+            user: Handlebars.compile(
+                '<form class="bubble bubble--user"><div class="bubble__inner">{{{ smartString prompt userInput }}}{{{fields}}}<input type="hidden" name="step" value="{{stepKey}}"></div></form>'
+            )
         };
-
 
     function Selby( element, options ) {
 
@@ -40,7 +48,7 @@
         // result in the first object. The first object
         // is generally empty because we don't want to alter
         // the default options for future instances of the plugin
-        this.options = $.extend( true, {}, defaults, options );
+        this.options = $.extend( true, {}, defaults, $.fn[pluginName].defaults, options );
 
         this._defaults = defaults;
         this._fields = this.options.fields;
@@ -50,6 +58,10 @@
         this._storage = {};
 
         this.init();
+
+        console.timeEnd( 'selby' );
+
+        console.log( this.options );
 
     }
 
@@ -126,7 +138,7 @@
 
                 var step = this._questions[stepKey];
 
-                // @TODO: check step objeect fields array vs. storage to see if we're asking for data we either already have (remove the field keys if so)
+                // @TODO: check step object fields array vs. storage to see if we're asking for data we either already have (remove the field keys if so)
 
                 if ( step.hasOwnProperty( 'bot' ) ) {
 
@@ -157,12 +169,8 @@
 
             }
 
-            var $lastBotMsg = this.element.find( '.bubble--bot:last' );
-
             if ( stepKey !== 'start' ) {
-                $( 'html, body' ).animate({
-                    scrollTop: $lastBotMsg.offset().top
-                }, 500 );
+                this.scrollToLastBotMsg();
             }
 
         },
@@ -262,9 +270,13 @@
                 nextStepKey = step.next;
             }
 
-            if ( step.sendData === true || this._questions[nextStepKey].sendData === true ) {
-                this.processData();
+            if ( step.sendData || this._questions[nextStepKey].sendData ) {
+
+                var endpointKey = ( step.sendData ) ? step.sendData : this._questions[nextStepKey].sendData;
+                this.processData( endpointKey );
+
                 return false;
+
             }
 
             return nextStepKey;
@@ -288,20 +300,22 @@
 
         },
 
-        processData: function () {
+        processData: function( endpointKey ) {
 
-            // @TODO: allow user to filter datapayload prior to sending to endpoint.
             var parent = this;
-            var url = this.options.dataEndpoint;
+
+            var endpoint = this.options.endpoints[endpointKey];
             var payload = this._storage;
 
             delete payload.step;
 
-            if ( this.options.dataFilter.constructor === Function )
-                payload = this.options.dataFilter( payload );
+            // @TODO: allow user to filter datapayload prior to sending to endpoint.
+            if ( endpoint.dataFilter && endpoint.dataFilter.constructor === Function )
+                payload = endpoint.dataFilter( payload );
+
 
             $.ajax({
-    			url: url,
+    			url: endpoint.url,
                 method: 'POST',
                 type: 'json',
     			data: payload,
@@ -312,7 +326,31 @@
                         userInput : parent._storage
                     }) );
 
-                    // @TODO: Add tracking and or data callback here.
+                    parent.scrollToLastBotMsg();
+
+                    // @TODO: Add onProcessDataSuccess callback here.
+
+                    // @TODO: Move this into utility function.
+                    if ( window.dataLayer ) {
+
+                        window.dataLayer.push({
+                            'event': 'Send Event',
+                            'event_category': 'Conversions',
+                            'event_action': 'Conversation Complete',
+                            'event_label': parent.options.conversationName
+                        });
+
+                    } else if ( window.GoogleAnalyticsObject ) {
+
+                        window[window.GoogleAnalyticsObject]( 'send', {
+                            hitType: 'event',
+                            eventCategory: 'Conversions',
+                            eventAction: 'Conversation Complete',
+                            eventLabel: parent.options.conversationName
+                        });
+
+                    }
+
     			},
     			error: function( jqXHR, textStatus, errorThrown ) {
                     // @TODO: Add error tracking and or data callback here.
@@ -324,25 +362,45 @@
                         userInput : parent._storage
                     }) );
 
-                    var requiredFields = parent.checkRequiredFields();
+                    parent.scrollToLastBotMsg();
+
+                    var missingFieldKeys = parent.checkRequiredFields();
 
                     //console.log( requiredFields );
 
-                    if ( requiredFields.length > 0 ) {
+                    if ( missingFieldKeys.length > 0 ) {
 
                         xhr.abort();
 
-                        parent.element.append( tpl.bot({
-                            bot: '<strong>Sorry {{firstname}}</strong> It looks like I am missing some required information to process your request. Can you please provide the following information?',
-                            userInput : parent._storage
-                        }) );
+                        var messages = parent.options.messages;
 
-                        parent.element.append( tpl.user({
-                            prompt: 'Sure thing! Here\'s the remaining information:',
-                            userInput : parent._storage,
-                            stepKey: 'end',
-                            fields: parent.renderFields( requiredFields, 'end' )
-                        }) );
+                        setTimeout( function() {
+
+                            var botData = {
+                                userInput : parent._storage
+                            };
+
+                            if ( messages.missingFields && ( messages.missingFields.constructor == Function ) ) {
+                                botData.bot = messages.missingFields( parent._storage, missingFieldKeys, parent._defaults.messages.missingFields );
+                            } else {
+                                botData.bot = messages.missingFields;
+                            }
+
+                            console.log( botData );
+
+                            // @TODO: allow for overriding the bot message output here (in case we need to change the wording for a particular scenario)
+                            parent.element.append( tpl.bot( botData ) );
+
+                            parent.element.append( tpl.user({
+                                prompt: 'Sure thing! Here\'s the remaining information:',
+                                userInput : parent._storage,
+                                stepKey: 'end',
+                                fields: parent.renderFields( missingFieldKeys, 'end' )
+                            }) );
+
+                            parent.scrollToLastBotMsg();
+
+                        }, 2500 );
 
                     }
 
@@ -355,6 +413,13 @@
 
             ucFirst: function( str ) {
                 return str.replace( /^./, str.substring( 0, 1 ).toUpperCase() );
+            },
+
+            scrollToLastBotMsg: function() {
+                var $lastBotMsg = this.element.find( '.bubble--bot:last' );
+                $( 'html, body' ).animate({
+                    scrollTop: $lastBotMsg.offset().top
+                }, 500 );
             },
 
             serializeObject: function( form ) {
@@ -397,23 +462,27 @@
 
                 return inputObj;
 
-            },
+            }
 
-            // humanizeResponseTime: function( text ) {
-            //     var words = text.split( ' ' );
-            //     var wpm = 55;
-            //     var responseTime = ( ( words.length / wpm ) * 60 ) * 10;
-            //     return responseTime;
-            // }
+            /* We might need these later...
+            humanizeResponseTime: function( text ) {
+                var words = text.split( ' ' );
+                var wpm = 55;
+                var responseTime = ( ( words.length / wpm ) * 60 ) * 10;
+                return responseTime;
+            }
+            */
 
     };
 
-    $.fn[pluginName] = function ( options ) {
-        return this.each(function () {
+    $.fn[pluginName] = function( options ) {
+        return this.each( function() {
             if ( !$.data( this, 'plugin_' + pluginName ) ) {
                 $.data( this, 'plugin_' + pluginName, new Selby( this, options ) );
             }
         });
     }
+
+    $.fn[pluginName].defaults = {};
 
 })( jQuery, window, document );
