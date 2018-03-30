@@ -1,7 +1,8 @@
 {
-  "name": "selby",
+  "name": "Selby",
   "version": "1.0.0",
   "description": "",
+  "repo": "https://github.com/derekcavaliero/selby",
   "main": "",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"

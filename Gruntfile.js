@@ -37,13 +37,34 @@ module.exports = function( grunt ) {
 
 		uglify: {
 			options: {
-				beautify: false,  // minify file when set to false
-				compress: true, // renames variables and all that
-				mangle: true
+				banner: '/*! \n * <%= pkg.name %> v<%= pkg.version %>\n * <%= pkg.repo %>\n * \n * Copyright (c) 2018 Derek Cavaliero @ WebMechanix\n * \n * Date: <%= grunt.template.today("yyyy-mm-dd HH:MM:ss Z") %> \n */\n',
 			},
 			dist: {
+				options: {
+					beautify: false,  // minify file when set to false
+					compress: true, // renames variables and all that
+					mangle: true,
+					compress: {
+						drop_console: true
+					}
+				},
 				files: {
 					'<%= project.dist.js %>/jquery.selby.min.js': [
+						'<%= project.src.js %>/jquery.selby.js'
+					]
+				}
+			},
+			dev: {
+				options: {
+					beautify: true,  // minify file when set to false
+					compress: false, // renames variables and all that
+					mangle: false,
+					compress: {
+						drop_console: false
+					}
+				},
+				files: {
+					'<%= project.dist.js %>/jquery.selby.js': [
 						'<%= project.src.js %>/jquery.selby.js'
 					]
 				}
