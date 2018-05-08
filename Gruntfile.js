@@ -26,7 +26,7 @@ module.exports = function( grunt ) {
 			dist: {
 				options: {
 					style: 'expanded',  // nested, compact, compressed, expanded
-					sourcemap: 'none'     // auto, file, inline, none
+					//sourcemap: 'none'     // auto, file, inline, none
 				},
 				files: {
                     '<%= project.dist.css %>/selby.min.css': [ '<%= project.src.scss %>/selby.scss' ],

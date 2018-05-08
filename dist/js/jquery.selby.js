@@ -4,7 +4,7 @@
  * 
  * Copyright (c) 2018 Derek Cavaliero @ WebMechanix
  * 
- * Date: 2018-03-29 21:02:49 EDT 
+ * Date: 2018-04-01 13:48:42 EDT 
  */
 !function($, window, document, undefined) {
     function Selby(element, options) {
